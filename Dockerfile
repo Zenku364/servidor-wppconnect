@@ -1,13 +1,7 @@
 # Usa una imagen base de Node.js
 FROM node:18
 
-# Crea un usuario no root
-RUN useradd -m myuser && mkdir /app && chown myuser:myuser /app
-
-# Cambia al usuario no root
-USER myuser
-
-# Instala dependencias del sistema para Chromium
+# Instala dependencias del sistema para Chromium como root
 RUN apt-get update && apt-get install -y \
     chromium \
     fonts-ipafont-gothic \
@@ -15,6 +9,12 @@ RUN apt-get update && apt-get install -y \
     fonts-thai-tlwg \
     fonts-kacst \
     && rm -rf /var/lib/apt/lists/*
+
+# Crea un usuario no root y configura el directorio de trabajo
+RUN useradd -m myuser && mkdir /app && chown myuser:myuser /app
+
+# Cambia al usuario no root
+USER myuser
 
 # Define el directorio de trabajo
 WORKDIR /app
