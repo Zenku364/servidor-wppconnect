@@ -1,5 +1,5 @@
 # Usa una imagen base de Node.js
-FROM node:18
+FROM node:20
 
 # Instala dependencias del sistema para Chromium como root
 RUN apt-get update && apt-get install -y \
