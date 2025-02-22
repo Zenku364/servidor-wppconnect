@@ -19,12 +19,12 @@ USER myuser
 # Define el directorio de trabajo
 WORKDIR /app
 
-# Copia los archivos del proyecto
-COPY package.json package-lock.json ./
+# Copia los archivos del proyecto como el usuario myuser
+COPY --chown=myuser:myuser package.json package-lock.json ./
 RUN npm install
 
-# Copia el resto del código
-COPY . .
+# Copia el resto del código como el usuario myuser
+COPY --chown=myuser:myuser . .
 
 # Configura Puppeteer para usar el Chromium instalado
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
