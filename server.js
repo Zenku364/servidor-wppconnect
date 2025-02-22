@@ -9,29 +9,30 @@ app.use(express.json());
 const wppOptions = {
   puppeteer: {
     args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-gpu',
-      '--disable-dev-shm-usage',
+      '--no-sandbox',              // Desactiva el sandbox para entornos Docker
+      '--disable-setuid-sandbox',  // Desactiva el sandbox setuid para contenedores
+      '--disable-gpu',            // Desactiva la GPU (no necesaria en Koyeb)
+      '--disable-dev-shm-usage',   // Evita problemas de memoria compartida en Docker
     ],
-    timeout: 120000,              // Aumenta el timeout a 2 minutos
-    headless: true,
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
-    defaultViewport: null,
+    timeout: 180000,              // Aumenta el timeout a 3 minutos (180,000 ms) para esta versión
+    headless: true,               // Ejecuta Chromium en modo headless
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium', // Usa Chromium instalado
+    defaultViewport: null,        // Desactiva el viewport predeterminado
   },
-  session: 'session',
+  session: 'session',           // Nombre de la sesión
   catchQR: (base64Qr, asciiQR) => {
-    console.log('QR Code generado:', asciiQR);
+    console.log('QR Code generado:', asciiQR); // Imprime el QR en logs
   },
-  logQR: true,
-  debug: true,
-  autoClose: false,
-  tokenStore: 'file',
-  tokenPath: '/app/tokens',
-  waitForLogin: true,
-  retries: 3,
+  logQR: true,                  // Habilita logs detallados del QR
+  debug: true,                  // Activa modo de depuración para más información
+  autoClose: false,             // Evita que la sesión se cierre automáticamente
+  tokenStore: 'file',           // Almacena tokens en archivos
+  tokenPath: '/app/tokens',     // Ruta para tokens, coincide con el Dockerfile
+  waitForLogin: true,           // Espera a que se escanee el QR
+  retries: 3,                   // Número de reintentos si falla la conexión
 };
 
+// Crear el cliente WppConnect
 create(wppOptions)
   .then((client) => {
     console.log("Cliente WppConnect conectado exitosamente");
@@ -71,7 +72,7 @@ create(wppOptions)
   })
   .catch((error) => {
     console.error("Error al iniciar WppConnect:", error);
-    process.exit(1);
+    process.exit(1); // Sale del proceso si no se puede conectar
   });
 
 app.listen(PORT, () => {
