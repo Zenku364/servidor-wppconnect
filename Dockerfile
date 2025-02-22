@@ -4,6 +4,11 @@ FROM node:18
 # Instala dependencias del sistema para Chromium
 RUN apt-get update && apt-get install -y \
     chromium \
+    fonts-ipafont-gothic \
+    fonts-wqy-zenhei \
+    fonts-thai-tlwg \
+    fonts-kacst \
+    ttf-freefont \
     && rm -rf /var/lib/apt/lists/*
 
 # Define el directorio de trabajo
@@ -19,7 +24,7 @@ COPY . .
 # Configura Puppeteer para usar el Chromium instalado
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
-ENV PUPPETEER_ARGS="--no-sandbox --disable-gpu"
+ENV PUPPETEER_ARGS="--no-sandbox --disable-setuid-sandbox --disable-gpu"
 
 # Expone el puerto
 EXPOSE 3000
