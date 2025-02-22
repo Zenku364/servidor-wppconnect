@@ -8,7 +8,6 @@ RUN apt-get update && apt-get install -y \
     fonts-wqy-zenhei \
     fonts-thai-tlwg \
     fonts-kacst \
-    ttf-freefont \
     && rm -rf /var/lib/apt/lists/*
 
 # Define el directorio de trabajo
