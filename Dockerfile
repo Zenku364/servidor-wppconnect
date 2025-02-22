@@ -3,7 +3,7 @@ FROM node:18
 
 # Instala dependencias del sistema para Chromium como root
 RUN apt-get update && apt-get install -y \
-    chromium \
+    chromium=124.* \
     fonts-ipafont-gothic \
     fonts-wqy-zenhei \
     fonts-thai-tlwg \

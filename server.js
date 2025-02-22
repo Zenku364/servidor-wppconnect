@@ -14,10 +14,11 @@ const wppOptions = {
       '--disable-gpu',            // Desactiva la GPU (no necesaria en Koyeb)
       '--disable-dev-shm-usage',   // Evita problemas de memoria compartida en Docker
     ],
-    timeout: 300000,              // Aumenta el timeout a 5 minutos (300,000 ms) para forzar la inicialización
+    timeout: 300000,              // Aumenta el timeout a 5 minutos (300,000 ms)
     headless: true,               // Ejecuta Chromium en modo headless
     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium', // Usa Chromium instalado
     defaultViewport: null,        // Desactiva el viewport predeterminado
+    slowMo: 100,                  // Agrega un retraso de 100ms para depuración (opcional, para ver si ayuda)
   },
   session: 'session',           // Nombre de la sesión
   catchQR: (base64Qr, asciiQR) => {
@@ -30,6 +31,8 @@ const wppOptions = {
   tokenPath: '/app/tokens',     // Ruta para tokens, coincide con el Dockerfile
   waitForLogin: true,           // Espera a que se escanee el QR
   retries: 5,                   // Aumenta los reintentos a 5 para mayor robustez
+  disableWelcome: true,         // Desactiva mensajes de bienvenida para acelerar
+  useChrome: true,              // Forzar el uso de Chrome/Chromium instalado
 };
 
 // Crear el cliente WppConnect
