@@ -1,6 +1,12 @@
 # Usa una imagen base de Node.js
 FROM node:18
 
+# Crea un usuario no root
+RUN useradd -m myuser && mkdir /app && chown myuser:myuser /app
+
+# Cambia al usuario no root
+USER myuser
+
 # Instala dependencias del sistema para Chromium
 RUN apt-get update && apt-get install -y \
     chromium \
