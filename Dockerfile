@@ -30,7 +30,8 @@ COPY --chown=myuser:myuser . .
 # Configura Puppeteer para usar el Chromium instalado
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
-ENV PUPPETEER_ARGS="--no-sandbox --disable-setuid-sandbox --disable-gpu --disable-dev-shm-usage --single-process"  # Añade --single-process para ahorrar memoria
+ENV PUPPETEER_ARGS="--no-sandbox --disable-setuid-sandbox --disable-gpu --disable-dev-shm-usage --single-process"
+# Añade --single-process para ahorrar memoria
 
 # Expone el puerto
 EXPOSE 3000
