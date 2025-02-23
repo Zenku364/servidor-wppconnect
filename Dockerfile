@@ -1,4 +1,5 @@
-FROM node:20-slim  # Usa una imagen más ligera
+FROM node:20-slim
+# Usa una imagen más ligera
 
 # Añade el repositorio de Google Chrome para Chromium
 RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - && \
@@ -31,7 +32,6 @@ COPY --chown=myuser:myuser . .
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV PUPPETEER_ARGS="--no-sandbox --disable-setuid-sandbox --disable-gpu --disable-dev-shm-usage --single-process"
-# Añade --single-process para ahorrar memoria
 
 # Expone el puerto
 EXPOSE 3000
