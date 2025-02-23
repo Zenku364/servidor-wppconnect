@@ -22,9 +22,7 @@ const client = new Client({
   },
   sessionId: 'session',
   catchQR: (base64Qr, asciiQR) => {
-    console.log('QR Code generado (ASCII legible):');
-    console.log(asciiQR);  // Mantiene el QR ASCII, pero asegúrate de que sea legible
-    // Opcional: convierte base64Qr a una imagen si es necesario
+    console.log('QR Code generado:', asciiQR);
   },
   logQR: true,
   debug: true,
@@ -35,12 +33,8 @@ const client = new Client({
   retries: 5,
 });
 
-// Endpoint para obtener el QR en base64 (sin usar qrcode, usando base64Qr directamente)
-client.on('qr', (base64Qr) => {
-  console.log('Evento QR recibido, QR en base64:', base64Qr.substring(0, 50) + '...');
-  app.get('/qr', (req, res) => {
-    res.send(`<img src="${base64Qr}" alt="QR Code for WhatsApp">`);
-  });
+client.on('qr', (qr) => {
+  console.log('Evento QR recibido:', qr);
 });
 
 client.on('ready', () => {
