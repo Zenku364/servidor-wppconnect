@@ -14,11 +14,11 @@ const wppOptions = {
       '--disable-gpu',            // Desactiva la GPU (no necesaria en Koyeb)
       '--disable-dev-shm-usage',   // Evita problemas de memoria compartida en Docker
     ],
-    timeout: 300000,              // Aumenta el timeout a 5 minutos (300,000 ms)
+    timeout: 300000,              // 5 minutos
     headless: true,               // Ejecuta Chromium en modo headless
     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium', // Usa Chromium instalado
     defaultViewport: null,        // Desactiva el viewport predeterminado
-    slowMo: 100,                  // Agrega un retraso de 100ms para depuración (opcional, para ver si ayuda)
+    slowMo: 100,                  // Añade un retraso para depuración
   },
   session: 'session',           // Nombre de la sesión
   catchQR: (base64Qr, asciiQR) => {
@@ -33,9 +33,14 @@ const wppOptions = {
   retries: 5,                   // Aumenta los reintentos a 5 para mayor robustez
   disableWelcome: true,         // Desactiva mensajes de bienvenida para acelerar
   useChrome: true,              // Forzar el uso de Chrome/Chromium instalado
+  onLoadingScreen: (percent, message) => {
+    console.log(`Cargando: ${percent}% - ${message}`); // Logs de progreso
+  },
+  onStateChange: (state) => {
+    console.log(`Estado cambiado: ${state}`); // Logs de cambios de estado
+  },
 };
 
-// Crear el cliente WppConnect
 create(wppOptions)
   .then((client) => {
     console.log("Cliente WppConnect conectado exitosamente");
@@ -71,6 +76,10 @@ create(wppOptions)
         client = newClient;
         console.log('Cliente reconectado exitosamente');
       }).catch(error => console.error('Error al reconectar:', error));
+    });
+
+    client.on('qr', (qr) => {
+      console.log('Evento QR recibido:', qr); // Logs adicionales para depurar
     });
   })
   .catch((error) => {
