@@ -1,91 +1,95 @@
 const express = require("express");
-const { create } = require("@wppconnect-team/wppconnect");
+const { Client } = require("@wppconnect/wa-js");
+const QRCode = require("qrcode"); // Para generar QR en base64
 
 const app = express();
 const PORT = 3000;
 
 app.use(express.json());
 
+let client;
+let qrData;
+
 const wppOptions = {
   puppeteer: {
     args: [
-      '--no-sandbox',              // Desactiva el sandbox para entornos Docker
-      '--disable-setuid-sandbox',  // Desactiva el sandbox setuid para contenedores
-      '--disable-gpu',            // Desactiva la GPU (no necesaria en Koyeb)
-      '--disable-dev-shm-usage',   // Evita problemas de memoria compartida en Docker
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-gpu',
+      '--disable-dev-shm-usage',
     ],
-    timeout: 300000,              // 5 minutos
-    headless: true,               // Ejecuta Chromium en modo headless
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium', // Usa Chromium instalado
-    defaultViewport: null,        // Desactiva el viewport predeterminado
-    slowMo: 100,                  // Añade un retraso para depuración
+    timeout: 300000,  // 5 minutos
+    headless: true,
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
+    defaultViewport: null,
+    slowMo: 100,      // Para depuración
   },
-  session: 'session',           // Nombre de la sesión
-  catchQR: (base64Qr, asciiQR) => {
-    console.log('QR Code generado:', asciiQR); // Imprime el QR en logs
-  },
-  logQR: true,                  // Habilita logs detallados del QR
-  debug: true,                  // Activa modo de depuración para más información
-  autoClose: false,             // Evita que la sesión se cierre automáticamente
-  tokenStore: 'file',           // Almacena tokens en archivos
-  tokenPath: '/app/tokens',     // Ruta para tokens, coincide con el Dockerfile
-  waitForLogin: true,           // Espera a que se escanee el QR
-  retries: 5,                   // Aumenta los reintentos a 5 para mayor robustez
-  disableWelcome: true,         // Desactiva mensajes de bienvenida para acelerar
-  useChrome: true,              // Forzar el uso de Chrome/Chromium instalado
-  onLoadingScreen: (percent, message) => {
-    console.log(`Cargando: ${percent}% - ${message}`); // Logs de progreso
-  },
-  onStateChange: (state) => {
-    console.log(`Estado cambiado: ${state}`); // Logs de cambios de estado
-  },
+  sessionId: 'session',
+  logQR: false,        // Desactiva logs ASCII del QR
+  debug: true,
+  autoClose: false,
+  tokenStore: 'file',
+  tokenPath: '/app/tokens',
+  waitForLogin: true,
+  retries: 5,
 };
 
-create(wppOptions)
-  .then((client) => {
-    console.log("Cliente WppConnect conectado exitosamente");
+client = new Client(wppOptions);
 
-    app.post("/send", async (req, res) => {
-      const { phone, message } = req.body;
+client.on('qr', async (qr) => {
+  console.log('Evento QR recibido, generando QR en base64...');
+  try {
+    qrData = await QRCode.toDataURL(qr); // Genera el QR en base64
+    console.log('QR generado, accede a /qr para verlo');
+  } catch (error) {
+    console.error('Error al generar QR:', error);
+  }
+});
 
-      if (!phone || !message) {
-        return res.status(400).json({ error: "Faltan datos (phone y message son requeridos)" });
-      }
+client.on('ready', () => {
+  console.log("Cliente WppConnect conectado exitosamente");
+});
 
-      try {
-        const formattedPhone = phone.replace(/[^\d]/g, '');
-        if (formattedPhone.length < 10) {
-          return res.status(400).json({ error: "Número de teléfono inválido" });
-        }
+client.on('disconnected', () => {
+  console.log('Cliente desconectado, intentando reconectar...');
+  client.initialize().catch(error => console.error('Error al reconectar:', error));
+});
 
-        await client.sendText(`${formattedPhone}@c.us`, message);
-        res.json({ success: true, message: "Mensaje enviado exitosamente" });
-      } catch (error) {
-        console.error("Error al enviar mensaje:", error);
-        res.status(500).json({ error: "Error al enviar el mensaje", details: error.message });
-      }
-    });
+client.initialize().catch(error => console.error('Error al inicializar:', error));
 
-    app.get("/status", (req, res) => {
-      res.json({ status: "Conectado", client: client.isConnected() });
-    });
+// Endpoint para obtener el QR como imagen
+app.get('/qr', (req, res) => {
+  if (qrData) {
+    res.send(`<img src="${qrData}" alt="QR Code for WhatsApp">`);
+  } else {
+    res.status(404).send('QR no disponible, espera a que se genere');
+  }
+});
 
-    client.on('disconnected', () => {
-      console.log('Cliente desconectado, intentando reconectar...');
-      create(wppOptions).then(newClient => {
-        client = newClient;
-        console.log('Cliente reconectado exitosamente');
-      }).catch(error => console.error('Error al reconectar:', error));
-    });
+app.post("/send", async (req, res) => {
+  const { phone, message } = req.body;
 
-    client.on('qr', (qr) => {
-      console.log('Evento QR recibido:', qr); // Logs adicionales para depurar
-    });
-  })
-  .catch((error) => {
-    console.error("Error al iniciar WppConnect:", error);
-    process.exit(1); // Sale del proceso si no se puede conectar
-  });
+  if (!phone || !message) {
+    return res.status(400).json({ error: "Faltan datos (phone y message son requeridos)" });
+  }
+
+  try {
+    const formattedPhone = phone.replace(/[^\d]/g, '');
+    if (formattedPhone.length < 10) {
+      return res.status(400).json({ error: "Número de teléfono inválido" });
+    }
+
+    await client.sendText(`${formattedPhone}@c.us`, message);
+    res.json({ success: true, message: "Mensaje enviado exitosamente" });
+  } catch (error) {
+    console.error("Error al enviar mensaje:", error);
+    res.status(500).json({ error: "Error al enviar el mensaje", details: error.message });
+  }
+});
+
+app.get("/status", (req, res) => {
+  res.json({ status: "Conectado", client: client.isConnected() });
+});
 
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
