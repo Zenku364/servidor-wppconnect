@@ -1,11 +1,18 @@
 FROM node:20-slim
 # Usa una imagen más ligera
 
-# Añade el repositorio de Google Chrome para Chromium
-RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - && \
-    echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list
+# Instala dependencias básicas y herramientas necesarias (wget, gnupg, ca-certificates)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget \
+    gnupg \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
-# Instala dependencias del sistema para Chromium con una instalación más ligera
+# Descarga e instala la clave GPG de Google Chrome y agrega el repositorio
+RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg && \
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list
+
+# Instala Chromium con una instalación más ligera
 RUN apt-get update && apt-get install -y --no-install-recommends \
     chromium \
     fonts-ipafont-gothic \
