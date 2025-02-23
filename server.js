@@ -1,16 +1,12 @@
 const express = require("express");
 const { Client } = require("@wppconnect/wa-js");
-const QRCode = require("qrcode"); // Para generar QR en base64
 
 const app = express();
 const PORT = 3000;
 
 app.use(express.json());
 
-let client;
-let qrData;
-
-const wppOptions = {
+const client = new Client({
   puppeteer: {
     args: [
       '--no-sandbox',
@@ -25,46 +21,33 @@ const wppOptions = {
     slowMo: 100,      // Para depuración
   },
   sessionId: 'session',
-  logQR: false,        // Desactiva logs ASCII del QR
+  catchQR: (base64Qr, asciiQR) => {
+    console.log('QR Code generado (ASCII legible):');
+    console.log(asciiQR);  // Mantiene el QR ASCII, pero asegúrate de que sea legible
+    // Opcional: convierte base64Qr a una imagen si es necesario
+  },
+  logQR: true,
   debug: true,
   autoClose: false,
   tokenStore: 'file',
   tokenPath: '/app/tokens',
   waitForLogin: true,
   retries: 5,
-};
+});
 
-client = new Client(wppOptions);
-
-client.on('qr', async (qr) => {
-  console.log('Evento QR recibido, generando QR en base64...');
-  try {
-    qrData = await QRCode.toDataURL(qr); // Genera el QR en base64
-    console.log('QR generado, accede a /qr para verlo');
-  } catch (error) {
-    console.error('Error al generar QR:', error);
-  }
+// Endpoint para obtener el QR en base64 (sin usar qrcode, usando base64Qr directamente)
+client.on('qr', (base64Qr) => {
+  console.log('Evento QR recibido, QR en base64:', base64Qr.substring(0, 50) + '...');
+  app.get('/qr', (req, res) => {
+    res.send(`<img src="${base64Qr}" alt="QR Code for WhatsApp">`);
+  });
 });
 
 client.on('ready', () => {
   console.log("Cliente WppConnect conectado exitosamente");
 });
 
-client.on('disconnected', () => {
-  console.log('Cliente desconectado, intentando reconectar...');
-  client.initialize().catch(error => console.error('Error al reconectar:', error));
-});
-
 client.initialize().catch(error => console.error('Error al inicializar:', error));
-
-// Endpoint para obtener el QR como imagen
-app.get('/qr', (req, res) => {
-  if (qrData) {
-    res.send(`<img src="${qrData}" alt="QR Code for WhatsApp">`);
-  } else {
-    res.status(404).send('QR no disponible, espera a que se genere');
-  }
-});
 
 app.post("/send", async (req, res) => {
   const { phone, message } = req.body;
@@ -89,6 +72,11 @@ app.post("/send", async (req, res) => {
 
 app.get("/status", (req, res) => {
   res.json({ status: "Conectado", client: client.isConnected() });
+});
+
+client.on('disconnected', () => {
+  console.log('Cliente desconectado, intentando reconectar...');
+  client.initialize();
 });
 
 app.listen(PORT, () => {
