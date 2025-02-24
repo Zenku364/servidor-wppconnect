@@ -16,8 +16,8 @@ wppconnect
       timeout: 60000,
     },
     catchQR: (base64Qr, asciiQR) => {
-      console.log('Escanea este QR con tu celular:');
-      console.log(asciiQR);
+      console.log('QR generado. Visita http://tu-url-de-render:10000/qr para escanearlo.');
+      global.qrCode = base64Qr; // Guardamos el QR en base64 para usarlo en el endpoint
     },
     logQR: true,
     autoClose: false,
@@ -54,6 +54,14 @@ wppconnect
       } catch (error) {
         console.log("Error listando grupos:", error);
         res.status(500).json({ error: "No se pudieron listar los grupos" });
+      }
+    });
+
+    app.get("/qr", (req, res) => {
+      if (global.qrCode) {
+        res.send(`<img src="data:image/png;base64,${global.qrCode}" alt="QR Code" />`);
+      } else {
+        res.status(404).send("No hay QR disponible aún. Espera a que se genere.");
       }
     });
   })
