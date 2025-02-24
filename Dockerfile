@@ -1,16 +1,22 @@
-FROM node:20
+FROM node:20-slim
+# Usa una imagen más ligera
 
-# Añade el repositorio de Google Chrome para Chromium
-RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - && \
-    echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list
+# Instala dependencias básicas y herramientas necesarias (wget, gnupg, ca-certificates)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget \
+    gnupg \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
-# Instala dependencias del sistema para Chromium como root
-RUN apt-get update && apt-get install -y \
+# Descarga e instala la clave GPG de Google Chrome y agrega el repositorio
+RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg && \
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list
+
+# Instala Chromium con una instalación más ligera
+RUN apt-get update && apt-get install -y --no-install-recommends \
     chromium \
     fonts-ipafont-gothic \
     fonts-wqy-zenhei \
-    fonts-thai-tlwg \
-    fonts-kacst \
     && rm -rf /var/lib/apt/lists/*
 
 # Crea un usuario no root y configura el directorio de trabajo
@@ -24,7 +30,7 @@ WORKDIR /app
 
 # Copia los archivos del proyecto como el usuario myuser
 COPY --chown=myuser:myuser package.json package-lock.json ./
-RUN npm install
+RUN npm install --production  # Instala solo dependencias de producción para ahorrar espacio
 
 # Copia el resto del código como el usuario myuser
 COPY --chown=myuser:myuser . .
@@ -32,7 +38,7 @@ COPY --chown=myuser:myuser . .
 # Configura Puppeteer para usar el Chromium instalado
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
-ENV PUPPETEER_ARGS="--no-sandbox --disable-setuid-sandbox --disable-gpu --disable-dev-shm-usage"
+ENV PUPPETEER_ARGS="--no-sandbox --disable-setuid-sandbox --disable-gpu --disable-dev-shm-usage --single-process"
 
 # Expone el puerto
 EXPOSE 3000
