@@ -13,13 +13,12 @@ const client = new Client({
       '--disable-setuid-sandbox',
       '--disable-gpu',
       '--disable-dev-shm-usage',
-      '--single-process',  // Añadido para ahorrar memoria
     ],
     timeout: 300000,  // 5 minutos
     headless: true,
     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
     defaultViewport: null,
-    slowMo: 0,  // Reducido a 0 para ahorrar recursos
+    slowMo: 100,      // Para depuración
   },
   sessionId: 'session',
   catchQR: (base64Qr, asciiQR) => {

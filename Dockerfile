@@ -1,18 +1,16 @@
-FROM node:20-slim
-# Usa una imagen más ligera
+FROM node:20
 
-# Instala dependencias básicas y herramientas necesarias (wget, gnupg, ca-certificates)
+# Añade el repositorio de Google Chrome para Chromium usando gpg (moderno y compatible)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     gnupg \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Descarga e instala la clave GPG de Google Chrome y agrega el repositorio
 RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg && \
     echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list
 
-# Instala Chromium con una instalación más ligera
+# Instala dependencias del sistema para Chromium como root
 RUN apt-get update && apt-get install -y --no-install-recommends \
     chromium \
     fonts-ipafont-gothic \
@@ -30,7 +28,7 @@ WORKDIR /app
 
 # Copia los archivos del proyecto como el usuario myuser
 COPY --chown=myuser:myuser package.json package-lock.json ./
-RUN npm install --production  # Instala solo dependencias de producción para ahorrar espacio
+RUN npm install
 
 # Copia el resto del código como el usuario myuser
 COPY --chown=myuser:myuser . .
@@ -38,7 +36,7 @@ COPY --chown=myuser:myuser . .
 # Configura Puppeteer para usar el Chromium instalado
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
-ENV PUPPETEER_ARGS="--no-sandbox --disable-setuid-sandbox --disable-gpu --disable-dev-shm-usage --single-process"
+ENV PUPPETEER_ARGS="--no-sandbox --disable-setuid-sandbox --disable-gpu --disable-dev-shm-usage"
 
 # Expone el puerto
 EXPOSE 3000
