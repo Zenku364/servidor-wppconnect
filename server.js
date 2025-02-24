@@ -65,22 +65,4 @@ app.post("/send", async (req, res) => {
 });
 
 app.get("/status", (req, res) => {
-  res.json({ status: "Conectado", client: client.isConnected() });
-});
-
-client.on('disconnected', () => {
-  console.log('Cliente desconectado, intentando reconectar...');
-  client.initialize();
-});
-
-app.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
-});
-
-process.on('uncaughtException', (error) => {
-  console.error('Error no manejado:', error);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Rechazo no manejado:', reason);
-});
+  res.json({ status:
