@@ -13,12 +13,13 @@ const client = new Client({
       '--disable-setuid-sandbox',
       '--disable-gpu',
       '--disable-dev-shm-usage',
+      '--single-process',  // Añadido para ahorrar memoria
     ],
     timeout: 300000,  // 5 minutos
     headless: true,
     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
     defaultViewport: null,
-    slowMo: 100,      // Para depuración
+    slowMo: 0,  // Reducido a 0 para ahorrar recursos
   },
   sessionId: 'session',
   catchQR: (base64Qr, asciiQR) => {
@@ -65,4 +66,22 @@ app.post("/send", async (req, res) => {
 });
 
 app.get("/status", (req, res) => {
-  res.json({ status:
+  res.json({ status: "Conectado", client: client.isConnected() });
+});
+
+client.on('disconnected', () => {
+  console.log('Cliente desconectado, intentando reconectar...');
+  client.initialize();
+});
+
+app.listen(PORT, () => {
+  console.log(`Servidor corriendo en http://localhost:${PORT}`);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Error no manejado:', error);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Rechazo no manejado:', reason);
+});
