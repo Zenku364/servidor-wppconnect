@@ -17,7 +17,7 @@ wppconnect
     },
     catchQR: (base64Qr, asciiQR) => {
       console.log('QR generado. Visita http://tu-url-de-render:10000/qr para escanearlo.');
-      global.qrCode = base64Qr; // Guardamos el QR en base64 para usarlo en el endpoint
+      global.qrCode = base64Qr; // Guardamos el QR en base64
     },
     logQR: true,
     autoClose: false,
