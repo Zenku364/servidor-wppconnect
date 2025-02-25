@@ -2,7 +2,7 @@ const express = require("express");
 const wppconnect = require("@wppconnect-team/wppconnect");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000; // Puerto flexible para local y Render
 
 app.use(express.json());
 
@@ -12,11 +12,11 @@ wppconnect
     puppeteerOptions: {
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
       headless: true,
-      executablePath: '/usr/bin/chromium',
-      timeout: 60000,
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium', // Usamos la variable para local y Render
+      timeout: 120000, // Aumentamos el timeout a 2 minutos para evitar fallos
     },
     catchQR: (base64Qr, asciiQR) => {
-      console.log('QR generado. Visita http://tu-url-de-render:10000/qr para escanearlo.');
+      console.log('QR generado. Visita http://localhost:3000/qr o el puerto de Render para escanearlo.');
       global.qrCode = base64Qr; // Guardamos el QR en base64
     },
     logQR: true,
