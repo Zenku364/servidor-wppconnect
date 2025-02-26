@@ -1,3 +1,3 @@
-2025/02/26-15:18:04.752 4cec Reusing MANIFEST C:\Users\User\wppconnect\tokens\session\Default\Sync Data\LevelDB/MANIFEST-000001
-2025/02/26-15:18:04.754 4cec Recovering log #3
-2025/02/26-15:18:04.755 4cec Reusing old log C:\Users\User\wppconnect\tokens\session\Default\Sync Data\LevelDB/000003.log 
+2025/02/26-15:51:55.646 47b4 Reusing MANIFEST C:\Users\User\wppconnect\tokens\session\Default\Sync Data\LevelDB/MANIFEST-000001
+2025/02/26-15:51:55.652 47b4 Recovering log #3
+2025/02/26-15:51:55.674 47b4 Reusing old log C:\Users\User\wppconnect\tokens\session\Default\Sync Data\LevelDB/000003.log 
