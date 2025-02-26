@@ -10,16 +10,24 @@ wppconnect
   .create({
     session: 'session',
     puppeteerOptions: {
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-gpu',
+        '--disable-dev-shm-usage',
+        '--disable-extensions',
+        '--single-process',
+        '--no-zygote'
+      ],
       headless: true,
       executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
-      timeout: 120000, // Aumentamos a 2 minutos para evitar timeouts
+      timeout: 180000, // 3 minutos para evitar timeouts
     },
     catchQR: (base64Qr, asciiQR) => {
       console.log('QR generado. Escanea este QR desde la consola:');
-      console.log(asciiQR); // Muestra el QR en la consola como texto ASCII
+      console.log(asciiQR); // Muestra el QR en la consola
     },
-    logQR: false, // Desactivamos log adicional del QR
+    logQR: false,
     autoClose: false,
     tokenStore: 'file',
     folderNameToken: './tokens',
@@ -29,20 +37,23 @@ wppconnect
     global.client = client;
 
     client.onStateChange((state) => {
-      console.log('Estado actual:', state); // Depuración del estado
+      console.log('Estado actual:', state);
       if (state === 'DISCONNECTED') {
         console.log('WhatsApp se desconectó, intentando volver a conectar...');
-        client.initialize(); // Reintenta la conexión
+        client.initialize();
       }
     });
 
     app.post("/send-to-group", async (req, res) => {
       const { groupId, message } = req.body;
+      console.log('Recibida solicitud para enviar mensaje:', { groupId, message });
       if (!groupId || !message) {
         return res.status(400).json({ error: "Falta el ID del grupo o el mensaje" });
       }
       try {
+        console.log('Intentando enviar mensaje...');
         await client.sendText(groupId, message);
+        console.log('Mensaje enviado con éxito');
         res.json({ success: true, method: "sendText", message: "Mensaje enviado al grupo con éxito" });
       } catch (error) {
         console.log("Error enviando mensaje al grupo:", error);
@@ -52,8 +63,8 @@ wppconnect
 
     app.get("/groups", async (req, res) => {
       try {
-        const chats = await client.getAllChats(); // Obtiene todos los chats
-        const groups = chats.filter(chat => chat.isGroup); // Filtra solo los grupos
+        const chats = await client.getAllChats();
+        const groups = chats.filter(chat => chat.isGroup);
         res.json({ success: true, groups });
       } catch (error) {
         console.log("Error listando grupos:", error);
