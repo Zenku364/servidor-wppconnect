@@ -1,3 +1,5 @@
-2025/02/26-16:47:22.164 67b0 Reusing MANIFEST C:\Users\User\wppconnect\tokens\session\Default\Site Characteristics Database/MANIFEST-000001
-2025/02/26-16:47:22.165 67b0 Recovering log #3
-2025/02/26-16:47:22.165 67b0 Reusing old log C:\Users\User\wppconnect\tokens\session\Default\Site Characteristics Database/000003.log 
+2025/02/26-17:21:34.806 6164 Recovering log #3
+2025/02/26-17:21:34.806 6164 Level-0 table #3: started
+2025/02/26-17:21:34.815 6164 Level-0 table #3: 219 bytes OK
+2025/02/26-17:21:34.832 6164 Delete type=0 #3
+2025/02/26-17:21:34.832 6164 Delete type=3 #1

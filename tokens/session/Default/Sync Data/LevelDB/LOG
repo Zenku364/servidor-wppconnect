@@ -1,3 +1,5 @@
-2025/02/26-16:47:22.162 529c Reusing MANIFEST C:\Users\User\wppconnect\tokens\session\Default\Sync Data\LevelDB/MANIFEST-000001
-2025/02/26-16:47:22.164 529c Recovering log #3
-2025/02/26-16:47:22.165 529c Reusing old log C:\Users\User\wppconnect\tokens\session\Default\Sync Data\LevelDB/000003.log 
+2025/02/26-17:21:34.784 21dc Recovering log #3
+2025/02/26-17:21:34.802 21dc Level-0 table #3: started
+2025/02/26-17:21:34.810 21dc Level-0 table #3: 1159 bytes OK
+2025/02/26-17:21:34.825 21dc Delete type=0 #3
+2025/02/26-17:21:34.825 21dc Delete type=3 #1

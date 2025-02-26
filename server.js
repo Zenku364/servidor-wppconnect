@@ -17,15 +17,18 @@ wppconnect
         '--disable-dev-shm-usage',
         '--disable-extensions',
         '--single-process',
-        '--no-zygote'
+        '--no-zygote',
+        '--disable-background-networking',
+        '--enable-low-end-device-mode'
       ],
       headless: true,
       executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
-      timeout: 180000, // 3 minutos para evitar timeouts
+      timeout: 300000, // 5 minutos
+      handleSIGTERM: false,
     },
     catchQR: (base64Qr, asciiQR) => {
       console.log('QR generado. Escanea este QR desde la consola:');
-      console.log(asciiQR); // Muestra el QR en la consola
+      console.log(asciiQR);
     },
     logQR: false,
     autoClose: false,
@@ -57,7 +60,15 @@ wppconnect
         res.json({ success: true, method: "sendText", message: "Mensaje enviado al grupo con éxito" });
       } catch (error) {
         console.log("Error enviando mensaje al grupo:", error);
-        res.status(500).json({ error: "No se pudo enviar el mensaje al grupo" });
+        if (error.message.includes('detached Frame')) {
+          console.log('Reiniciando sesión por detached Frame...');
+          await client.initialize();
+          await new Promise(resolve => setTimeout(resolve, 5000)); // Espera 5 segundos
+          await client.sendText(groupId, message);
+          res.json({ success: true, method: "sendText", message: "Mensaje enviado después de reinicio" });
+        } else {
+          res.status(500).json({ error: "No se pudo enviar el mensaje al grupo" });
+        }
       }
     });
 
