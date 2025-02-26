@@ -19,12 +19,15 @@ wppconnect
         '--single-process',
         '--no-zygote',
         '--disable-background-networking',
-        '--enable-low-end-device-mode'
+        '--enable-low-end-device-mode',
+        '--ignore-certificate-errors',
+        '--no-first-run'
       ],
       headless: true,
       executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
-      timeout: 300000, // 5 minutos
+      timeout: 600000, // 10 minutos
       handleSIGTERM: false,
+      handleSIGHUP: false,
     },
     catchQR: (base64Qr, asciiQR) => {
       console.log('QR generado. Escanea este QR desde la consola:');
@@ -60,10 +63,11 @@ wppconnect
         res.json({ success: true, method: "sendText", message: "Mensaje enviado al grupo con éxito" });
       } catch (error) {
         console.log("Error enviando mensaje al grupo:", error);
-        if (error.message.includes('detached Frame')) {
-          console.log('Reiniciando sesión por detached Frame...');
+        if (error.message.includes('WPP is not defined') || error.message.includes('invariant') || error.message.includes('detached Frame')) {
+          console.log('Reiniciando sesión por error crítico...');
           await client.initialize();
-          await new Promise(resolve => setTimeout(resolve, 5000)); // Espera 5 segundos
+          await new Promise(resolve => setTimeout(resolve, 10000)); // Espera 10 segundos
+          console.log('Reintentando enviar mensaje después de reinicio...');
           await client.sendText(groupId, message);
           res.json({ success: true, method: "sendText", message: "Mensaje enviado después de reinicio" });
         } else {
