@@ -58,20 +58,21 @@ wppconnect
       }
       try {
         console.log('Intentando enviar mensaje...');
-        await client.sendText(groupId, message);
-        console.log('Mensaje enviado con éxito');
-        res.json({ success: true, method: "sendText", message: "Mensaje enviado al grupo con éxito" });
+        const result = await client.sendText(groupId, message);
+        console.log('Mensaje enviado con éxito. Resultado:', result);
+        res.json({ success: true, method: "sendText", message: "Mensaje enviado al grupo con éxito", result });
       } catch (error) {
-        console.log("Error enviando mensaje al grupo:", error);
+        console.log("Error enviando mensaje al grupo:", error.message, error.stack);
         if (error.message.includes('WPP is not defined') || error.message.includes('invariant') || error.message.includes('detached Frame')) {
           console.log('Reiniciando sesión por error crítico...');
           await client.initialize();
           await new Promise(resolve => setTimeout(resolve, 10000)); // Espera 10 segundos
           console.log('Reintentando enviar mensaje después de reinicio...');
-          await client.sendText(groupId, message);
-          res.json({ success: true, method: "sendText", message: "Mensaje enviado después de reinicio" });
+          const retryResult = await client.sendText(groupId, message);
+          console.log('Mensaje enviado después de reinicio. Resultado:', retryResult);
+          res.json({ success: true, method: "sendText", message: "Mensaje enviado después de reinicio", retryResult });
         } else {
-          res.status(500).json({ error: "No se pudo enviar el mensaje al grupo" });
+          res.status(500).json({ error: "No se pudo enviar el mensaje al grupo", details: error.message });
         }
       }
     });

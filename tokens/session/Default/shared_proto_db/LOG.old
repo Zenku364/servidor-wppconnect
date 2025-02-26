@@ -1,7 +1,5 @@
-2025/02/26-17:21:35.074 2ec4 Recovering log #3
-2025/02/26-17:21:35.075 2ec4 Level-0 table #3: started
-2025/02/26-17:21:35.078 2ec4 Level-0 table #3: 19367 bytes OK
-2025/02/26-17:21:35.078 2ec4 Level-0 table #4: started
-2025/02/26-17:21:35.081 2ec4 Level-0 table #4: 4701 bytes OK
-2025/02/26-17:21:35.105 2ec4 Delete type=0 #3
-2025/02/26-17:21:35.105 2ec4 Delete type=3 #1
+2025/02/26-17:48:37.354 22b8 Recovering log #5
+2025/02/26-17:48:37.354 22b8 Level-0 table #7: started
+2025/02/26-17:48:37.356 22b8 Level-0 table #7: 2700 bytes OK
+2025/02/26-17:48:37.363 22b8 Delete type=0 #5
+2025/02/26-17:48:37.363 22b8 Delete type=3 #2
