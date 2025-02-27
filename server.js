@@ -61,32 +61,48 @@ wppconnect
 
     app.post("/send-to-group", async (req, res) => {
       const { groupId, message } = req.body;
-      console.log('Recibida solicitud para enviar mensaje:', { groupId, message });
+      console.log('Recibida solicitud para enviar mensaje:', { groupId, message, timestamp: new Date().toISOString() });
       if (!groupId || !message) {
         return res.status(400).json({ error: "Falta el ID del grupo o el mensaje" });
       }
       try {
         console.log('Intentando enviar mensaje...');
         const startTime = Date.now();
+        let timeoutOccurred = false;
         const result = await Promise.race([
           client.sendText(groupId, message),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout después de 25 minutos')), 1500000)) // 25 minutos como límite
+          new Promise((_, reject) => setTimeout(() => {
+            timeoutOccurred = true;
+            reject(new Error('Timeout después de 29 minutos (próximo a 30 min de Render)'));
+          }, 1740000)) // 29 minutos (1740000 ms), justo antes del límite de 30 min de Render
         ]);
         const endTime = Date.now();
-        console.log(`Mensaje enviado con éxito en ${((endTime - startTime) / 1000).toFixed(2)} segundos. Resultado:`, result);
+        if (timeoutOccurred) {
+          console.log(`Timeout detectado después de ${((endTime - startTime) / 1000).toFixed(2)} segundos.`);
+        } else {
+          console.log(`Mensaje enviado con éxito en ${((endTime - startTime) / 1000).toFixed(2)} segundos. Resultado:`, result);
+        }
         res.json({ success: true, method: "sendText", message: "Mensaje enviado al grupo con éxito", result });
       } catch (error) {
         console.log("Error enviando mensaje al grupo:", error.message, error.stack);
         if (error.message.includes('WPP is not defined') || error.message.includes('invariant') || error.message.includes('detached Frame') || error.message.includes('Invalid WID') || error.message.includes('Runtime.callFunctionOn timed out') || error.message.includes('Timeout')) {
           console.log('Reiniciando sesión por error crítico...');
           await client.initialize();
-          await new Promise(resolve => setTimeout(resolve, 20000)); // Aumentamos a 20 segundos
+          await new Promise(resolve => setTimeout(resolve, 25000)); // Aumentamos a 25 segundos
           console.log('Reintentando enviar mensaje después de reinicio...');
-          const retryResult = await Promise.race([
-            client.sendText(groupId, message),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout después de reinicio')), 1500000))
-          ]);
-          console.log('Mensaje enviado después de reinicio. Resultado:', retryResult);
+          let retryResult;
+          try {
+            const retryStartTime = Date.now();
+            retryResult = await Promise.race([
+              client.sendText(groupId, message),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout después de reinicio')), 1740000))
+            ]);
+            const retryEndTime = Date.now();
+            console.log(`Mensaje enviado después de reinicio en ${((retryEndTime - retryStartTime) / 1000).toFixed(2)} segundos. Resultado:`, retryResult);
+          } catch (retryError) {
+            console.log("Error en reintento:", retryError.message, retryError.stack);
+            return res.status(500).json({ error: "No se pudo enviar el mensaje al grupo después de reinicio", details: retryError.message });
+          }
           res.json({ success: true, method: "sendText", message: "Mensaje enviado después de reinicio", retryResult });
         } else {
           res.status(500).json({ error: "No se pudo enviar el mensaje al grupo", details: error.message });
