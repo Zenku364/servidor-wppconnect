@@ -28,10 +28,10 @@ wppconnect
       ],
       headless: true,
       executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
-      timeout: 900000, // 15 minutos
+      timeout: 1800000, // Aumentamos a 30 minutos
       handleSIGTERM: false,
       handleSIGHUP: false,
-      protocolTimeout: 600000 // Añadimos timeout para el protocolo CDP
+      protocolTimeout: 1200000 // Aumentamos a 20 minutos
     },
     catchQR: (base64Qr, asciiQR) => {
       console.log('QR generado. Escanea este QR desde la consola:');
@@ -93,6 +93,11 @@ wppconnect
         res.status(500).json({ error: "No se pudieron listar los grupos" });
       }
     });
+
+    app.get("/ping", (req, res) => {
+      console.log('Ping recibido, manteniendo servidor activo');
+      res.json({ success: true, message: "Servidor activo" });
+    });
   })
   .catch(error => console.log('Algo salió mal al empezar:', error));
 
@@ -102,17 +107,16 @@ async function keepSessionAlive() {
     if (client) {
       console.log('Manteniendo sesión activa con ping...');
       try {
-        // Usamos onStateChange para verificar el estado
         let currentState = null;
         client.onStateChange((state) => {
           currentState = state;
           console.log('Estado actual en ping:', state);
         });
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Espera 1 segundo para capturar el estado
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Espera 1 segundo
         if (currentState === 'DISCONNECTED' || currentState === 'UNLAUNCHED') {
           console.log('Sesión desconectada, reiniciando...');
           await client.initialize();
-          await new Promise(resolve => setTimeout(resolve, 10000));
+          await new Promise(resolve => setTimeout(resolve, 10000)); // Espera 10 segundos
           console.log('Sesión reiniciada, verificando estado...');
           let newState = null;
           client.onStateChange((state) => {
@@ -123,6 +127,7 @@ async function keepSessionAlive() {
           if (!newState || newState === 'DISCONNECTED' || newState === 'UNLAUNCHED') {
             console.log('Reinicio fallido, intentando nuevamente...');
             await client.initialize();
+            await new Promise(resolve => setTimeout(resolve, 15000)); // Aumenta a 15 segundos
           }
         } else {
           console.log('Ping exitoso, sesión activa');
@@ -131,7 +136,7 @@ async function keepSessionAlive() {
         console.log('Error en ping:', error);
         console.log('Reiniciando sesión por error...');
         await client.initialize();
-        await new Promise(resolve => setTimeout(resolve, 10000));
+        await new Promise(resolve => setTimeout(resolve, 15000)); // Aumenta a 15 segundos
         console.log('Sesión reiniciada, verificando estado...');
         try {
           let newState = null;
@@ -143,14 +148,14 @@ async function keepSessionAlive() {
           if (!newState || newState === 'DISCONNECTED' || newState === 'UNLAUNCHED') {
             console.log('Reinicio fallido, intentando nuevamente...');
             await client.initialize();
+            await new Promise(resolve => setTimeout(resolve, 15000));
           }
         } catch (retryError) {
           console.log('Error después de reinicio:', retryError);
         }
       }
     }
-  }, 300000); // Cada 5 minutos
-}
+  }, 60000); // Cada 1 minuto (más frecuente para mantener activo)
 
 // Manejo de señal SIGTERM para intentar cerrar gracefully
 process.on('SIGTERM', () => {
