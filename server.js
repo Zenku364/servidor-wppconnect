@@ -67,10 +67,10 @@ wppconnect
         res.json({ success: true, method: "sendText", message: "Mensaje enviado al grupo con éxito", result });
       } catch (error) {
         console.log("Error enviando mensaje al grupo:", error.message, error.stack);
-        if (error.message.includes('WPP is not defined') || error.message.includes('invariant') || error.message.includes('detached Frame')) {
+        if (error.message.includes('WPP is not defined') || error.message.includes('invariant') || error.message.includes('detached Frame') || error.message.includes('Invalid WID')) {
           console.log('Reiniciando sesión por error crítico...');
           await client.initialize();
-          await new Promise(resolve => setTimeout(resolve, 10000));
+          await new Promise(resolve => setTimeout(resolve, 10000)); // Espera 10 segundos
           console.log('Reintentando enviar mensaje después de reinicio...');
           const retryResult = await client.sendText(groupId, message);
           console.log('Mensaje enviado después de reinicio. Resultado:', retryResult);
@@ -95,14 +95,27 @@ wppconnect
   .catch(error => console.log('Algo salió mal al empezar:', error));
 
 // Función para mantener la sesión viva enviando un ping periódico
-function keepSessionAlive() {
+async function keepSessionAlive() {
   setInterval(async () => {
     if (client) {
       console.log('Manteniendo sesión activa con ping...');
       try {
         await client.getStatus();
+        console.log('Ping exitoso, sesión activa');
       } catch (error) {
         console.log('Error en ping:', error);
+        if (error.message.includes('Invalid WID')) {
+          console.log('Reiniciando sesión por WID inválido...');
+          await client.initialize();
+          await new Promise(resolve => setTimeout(resolve, 10000)); // Espera 10 segundos
+          console.log('Sesión reiniciada, verificando ping...');
+          try {
+            await client.getStatus();
+            console.log('Ping exitoso después de reinicio');
+          } catch (retryError) {
+            console.log('Error después de reinicio:', retryError);
+          }
+        }
       }
     }
   }, 60000); // Cada 1 minuto
