@@ -24,14 +24,15 @@ wppconnect
         '--enable-low-end-device-mode',
         '--ignore-certificate-errors',
         '--no-first-run',
-        '--disable-web-security'
+        '--disable-web-security',
+        '--enable-features=NetworkService'
       ],
       headless: true,
       executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
-      timeout: 900000, // 15 minutos
+      timeout: 1200000, // 20 minutos
       handleSIGTERM: false,
       handleSIGHUP: false,
-      protocolTimeout: 600000 // Añadimos timeout para el protocolo CDP
+      protocolTimeout: 900000 // 15 minutos para el protocolo CDP
     },
     catchQR: (base64Qr, asciiQR) => {
       console.log('QR generado. Escanea este QR desde la consola:');
@@ -69,10 +70,10 @@ wppconnect
         res.json({ success: true, method: "sendText", message: "Mensaje enviado al grupo con éxito", result });
       } catch (error) {
         console.log("Error enviando mensaje al grupo:", error.message, error.stack);
-        if (error.message.includes('WPP is not defined') || error.message.includes('invariant') || error.message.includes('detached Frame') || error.message.includes('Invalid WID')) {
+        if (error.message.includes('WPP is not defined') || error.message.includes('invariant') || error.message.includes('detached Frame') || error.message.includes('Invalid WID') || error.message.includes('Runtime.callFunctionOn timed out')) {
           console.log('Reiniciando sesión por error crítico...');
           await client.initialize();
-          await new Promise(resolve => setTimeout(resolve, 10000)); // Espera 10 segundos
+          await new Promise(resolve => setTimeout(resolve, 15000)); // Aumentamos a 15 segundos
           console.log('Reintentando enviar mensaje después de reinicio...');
           const retryResult = await client.sendText(groupId, message);
           console.log('Mensaje enviado después de reinicio. Resultado:', retryResult);
