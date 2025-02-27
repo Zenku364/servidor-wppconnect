@@ -73,12 +73,13 @@ wppconnect
           client.sendText(groupId, message),
           new Promise((_, reject) => setTimeout(() => {
             timeoutOccurred = true;
-            reject(new Error('Timeout después de 29 minutos (próximo a 30 min de Render)'));
-          }, 1740000)) // 29 minutos (1740000 ms), justo antes del límite de 30 min de Render
+            reject(new Error('Timeout después de 28 minutos (próximo a 30 min de Render)'));
+          }, 1680000)) // 28 minutos (1680000 ms), justo antes del límite de 30 min de Render
         ]);
         const endTime = Date.now();
         if (timeoutOccurred) {
           console.log(`Timeout detectado después de ${((endTime - startTime) / 1000).toFixed(2)} segundos.`);
+          throw new Error('Timeout detectado en Render, revisa los recursos o el plan');
         } else {
           console.log(`Mensaje enviado con éxito en ${((endTime - startTime) / 1000).toFixed(2)} segundos. Resultado:`, result);
         }
@@ -88,22 +89,22 @@ wppconnect
         if (error.message.includes('WPP is not defined') || error.message.includes('invariant') || error.message.includes('detached Frame') || error.message.includes('Invalid WID') || error.message.includes('Runtime.callFunctionOn timed out') || error.message.includes('Timeout')) {
           console.log('Reiniciando sesión por error crítico...');
           await client.initialize();
-          await new Promise(resolve => setTimeout(resolve, 25000)); // Aumentamos a 25 segundos
+          await new Promise(resolve => setTimeout(resolve, 30000)); // Aumentamos a 30 segundos
           console.log('Reintentando enviar mensaje después de reinicio...');
           let retryResult;
           try {
             const retryStartTime = Date.now();
             retryResult = await Promise.race([
               client.sendText(groupId, message),
-              new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout después de reinicio')), 1740000))
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout después de reinicio')), 1680000))
             ]);
             const retryEndTime = Date.now();
             console.log(`Mensaje enviado después de reinicio en ${((retryEndTime - retryStartTime) / 1000).toFixed(2)} segundos. Resultado:`, retryResult);
+            res.json({ success: true, method: "sendText", message: "Mensaje enviado después de reinicio", retryResult });
           } catch (retryError) {
             console.log("Error en reintento:", retryError.message, retryError.stack);
             return res.status(500).json({ error: "No se pudo enviar el mensaje al grupo después de reinicio", details: retryError.message });
           }
-          res.json({ success: true, method: "sendText", message: "Mensaje enviado después de reinicio", retryResult });
         } else {
           res.status(500).json({ error: "No se pudo enviar el mensaje al grupo", details: error.message });
         }
