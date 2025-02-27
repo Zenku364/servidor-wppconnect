@@ -1,5 +1,5 @@
-2025/02/27-09:09:02.539 4a4c Recovering log #13
-2025/02/27-09:09:02.543 4a4c Level-0 table #15: started
-2025/02/27-09:09:02.544 4a4c Level-0 table #15: 0 bytes OK
-2025/02/27-09:09:02.580 4a4c Delete type=0 #13
-2025/02/27-09:09:02.580 4a4c Delete type=3 #11
+2025/02/27-13:41:25.509 2428 Recovering log #19
+2025/02/27-13:41:25.509 2428 Level-0 table #21: started
+2025/02/27-13:41:25.510 2428 Level-0 table #21: 0 bytes OK
+2025/02/27-13:41:25.528 2428 Delete type=0 #19
+2025/02/27-13:41:25.528 2428 Delete type=3 #17

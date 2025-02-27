@@ -1,5 +1,5 @@
-2025/02/27-09:40:44.134 5ed8 Recovering log #16
-2025/02/27-09:40:44.134 5ed8 Level-0 table #18: started
-2025/02/27-09:40:44.134 5ed8 Level-0 table #18: 0 bytes OK
-2025/02/27-09:40:44.143 5ed8 Delete type=0 #16
-2025/02/27-09:40:44.143 5ed8 Delete type=3 #14
+2025/02/27-13:52:42.358 38bc Recovering log #22
+2025/02/27-13:52:42.358 38bc Level-0 table #24: started
+2025/02/27-13:52:42.358 38bc Level-0 table #24: 0 bytes OK
+2025/02/27-13:52:42.369 38bc Delete type=0 #22
+2025/02/27-13:52:42.370 38bc Delete type=3 #20
