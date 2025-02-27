@@ -1,5 +1,5 @@
-2025/02/27-13:52:41.964 9dc Recovering log #37
-2025/02/27-13:52:41.966 9dc Level-0 table #39: started
-2025/02/27-13:52:41.997 9dc Level-0 table #39: 9545 bytes OK
-2025/02/27-13:52:42.014 9dc Delete type=0 #37
-2025/02/27-13:52:42.014 9dc Delete type=3 #35
+2025/02/27-16:11:41.514 53e8 Recovering log #55
+2025/02/27-16:11:41.534 53e8 Level-0 table #57: started
+2025/02/27-16:11:41.536 53e8 Level-0 table #57: 2791 bytes OK
+2025/02/27-16:11:41.572 53e8 Delete type=0 #55
+2025/02/27-16:11:41.572 53e8 Delete type=3 #53
