@@ -6,6 +6,8 @@ const PORT = process.env.PORT || 3000; // Puerto flexible para local y Render
 
 app.use(express.json());
 
+let client; // Declaramos client como variable global
+
 wppconnect
   .create({
     session: 'session',
@@ -34,14 +36,16 @@ wppconnect
       console.log(asciiQR);
     },
     logQR: false,
-    autoClose: false,
+    autoClose: 0, // Desactiva autocierre
     tokenStore: 'file',
     folderNameToken: './tokens',
   })
-  .then((client) => {
+  .then((c) => {
+    client = c; // Asignamos el cliente aquí
     console.log("¡WhatsApp está conectado y listo!");
-    global.client = client;
+    keepSessionAlive(); // Inicia la función para mantener la sesión
 
+    // Listener para cambios de estado dentro del .then()
     client.onStateChange((state) => {
       console.log('Estado actual:', state);
       if (state === 'DISCONNECTED') {
@@ -66,7 +70,7 @@ wppconnect
         if (error.message.includes('WPP is not defined') || error.message.includes('invariant') || error.message.includes('detached Frame')) {
           console.log('Reiniciando sesión por error crítico...');
           await client.initialize();
-          await new Promise(resolve => setTimeout(resolve, 10000)); // Espera 10 segundos
+          await new Promise(resolve => setTimeout(resolve, 10000));
           console.log('Reintentando enviar mensaje después de reinicio...');
           const retryResult = await client.sendText(groupId, message);
           console.log('Mensaje enviado después de reinicio. Resultado:', retryResult);
@@ -89,6 +93,36 @@ wppconnect
     });
   })
   .catch(error => console.log('Algo salió mal al empezar:', error));
+
+// Función para mantener la sesión viva enviando un ping periódico
+function keepSessionAlive() {
+  setInterval(async () => {
+    if (client) {
+      console.log('Manteniendo sesión activa con ping...');
+      try {
+        await client.getStatus();
+      } catch (error) {
+        console.log('Error en ping:', error);
+      }
+    }
+  }, 60000); // Cada 1 minuto
+}
+
+// Manejo de señal SIGTERM para intentar cerrar gracefully
+process.on('SIGTERM', () => {
+  console.log('Recibida señal SIGTERM, intentando cerrar gracefully...');
+  if (client) {
+    client.close().then(() => {
+      console.log('Sesión cerrada gracefully');
+      process.exit(0);
+    }).catch(err => {
+      console.log('Error al cerrar sesión:', err);
+      process.exit(1);
+    });
+  } else {
+    process.exit(0);
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`El programa está funcionando en el puerto ${PORT}`);
