@@ -23,13 +23,15 @@ wppconnect
         '--disable-background-networking',
         '--enable-low-end-device-mode',
         '--ignore-certificate-errors',
-        '--no-first-run'
+        '--no-first-run',
+        '--disable-web-security'
       ],
       headless: true,
       executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
-      timeout: 600000, // 10 minutos
+      timeout: 900000, // 15 minutos
       handleSIGTERM: false,
       handleSIGHUP: false,
+      protocolTimeout: 600000 // Añadimos timeout para el protocolo CDP
     },
     catchQR: (base64Qr, asciiQR) => {
       console.log('QR generado. Escanea este QR desde la consola:');
@@ -94,31 +96,40 @@ wppconnect
   })
   .catch(error => console.log('Algo salió mal al empezar:', error));
 
-// Función para mantener la sesión viva enviando un ping periódico
+// Función para mantener la sesión viva verificando el estado
 async function keepSessionAlive() {
   setInterval(async () => {
     if (client) {
       console.log('Manteniendo sesión activa con ping...');
       try {
-        await client.getStatus();
-        console.log('Ping exitoso, sesión activa');
+        // Usamos getState para verificar si el cliente está conectado
+        const state = await client.getState();
+        console.log('Estado actual en ping:', state);
+        if (state === 'DISCONNECTED' || state === 'UNLAUNCHED') {
+          console.log('Sesión desconectada, reiniciando...');
+          await client.initialize();
+          await new Promise(resolve => setTimeout(resolve, 10000));
+          console.log('Sesión reiniciada, verificando estado...');
+          const newState = await client.getState();
+          console.log('Nuevo estado:', newState);
+        } else {
+          console.log('Ping exitoso, sesión activa');
+        }
       } catch (error) {
         console.log('Error en ping:', error);
-        if (error.message.includes('Invalid WID')) {
-          console.log('Reiniciando sesión por WID inválido...');
-          await client.initialize();
-          await new Promise(resolve => setTimeout(resolve, 10000)); // Espera 10 segundos
-          console.log('Sesión reiniciada, verificando ping...');
-          try {
-            await client.getStatus();
-            console.log('Ping exitoso después de reinicio');
-          } catch (retryError) {
-            console.log('Error después de reinicio:', retryError);
-          }
+        console.log('Reiniciando sesión por error...');
+        await client.initialize();
+        await new Promise(resolve => setTimeout(resolve, 10000));
+        console.log('Sesión reiniciada, verificando estado...');
+        try {
+          const newState = await client.getState();
+          console.log('Nuevo estado después de reinicio:', newState);
+        } catch (retryError) {
+          console.log('Error después de reinicio:', retryError);
         }
       }
     }
-  }, 60000); // Cada 1 minuto
+  }, 300000); // Cada 5 minutos
 }
 
 // Manejo de señal SIGTERM para intentar cerrar gracefully
