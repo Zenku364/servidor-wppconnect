@@ -96,34 +96,22 @@ wppconnect
   })
   .catch(error => console.log('Algo salió mal al empezar:', error));
 
-// Función para mantener la sesión viva verificando el estado con onStateChange
+// Función para mantener la sesión viva verificando el estado
 async function keepSessionAlive() {
   setInterval(async () => {
     if (client) {
       console.log('Manteniendo sesión activa con ping...');
       try {
-        // Usamos onStateChange para verificar el estado
-        let currentState = null;
-        client.onStateChange((state) => {
-          currentState = state;
-          console.log('Estado actual en ping:', state);
-        });
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Espera 1 segundo para capturar el estado
-        if (currentState === 'DISCONNECTED' || currentState === 'UNLAUNCHED') {
+        // Usamos getState para verificar si el cliente está conectado
+        const state = await client.getState();
+        console.log('Estado actual en ping:', state);
+        if (state === 'DISCONNECTED' || state === 'UNLAUNCHED') {
           console.log('Sesión desconectada, reiniciando...');
           await client.initialize();
           await new Promise(resolve => setTimeout(resolve, 10000));
           console.log('Sesión reiniciada, verificando estado...');
-          let newState = null;
-          client.onStateChange((state) => {
-            newState = state;
-            console.log('Nuevo estado:', state);
-          });
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          if (!newState || newState === 'DISCONNECTED' || newState === 'UNLAUNCHED') {
-            console.log('Reinicio fallido, intentando nuevamente...');
-            await client.initialize();
-          }
+          const newState = await client.getState();
+          console.log('Nuevo estado:', newState);
         } else {
           console.log('Ping exitoso, sesión activa');
         }
@@ -134,16 +122,8 @@ async function keepSessionAlive() {
         await new Promise(resolve => setTimeout(resolve, 10000));
         console.log('Sesión reiniciada, verificando estado...');
         try {
-          let newState = null;
-          client.onStateChange((state) => {
-            newState = state;
-            console.log('Nuevo estado después de reinicio:', state);
-          });
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          if (!newState || newState === 'DISCONNECTED' || newState === 'UNLAUNCHED') {
-            console.log('Reinicio fallido, intentando nuevamente...');
-            await client.initialize();
-          }
+          const newState = await client.getState();
+          console.log('Nuevo estado después de reinicio:', newState);
         } catch (retryError) {
           console.log('Error después de reinicio:', retryError);
         }
