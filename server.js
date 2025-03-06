@@ -2,11 +2,11 @@ const express = require("express");
 const wppconnect = require("@wppconnect-team/wppconnect");
 
 const app = express();
-const PORT = process.env.PORT || 3000; // Puerto flexible para local y Render
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-let client; // Declaramos client como variable global
+let client;
 
 wppconnect
   .create({
@@ -31,26 +31,25 @@ wppconnect
       ],
       headless: true,
       executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
-      timeout: 1800000, // 30 minutos
+      timeout: 1800000,
       handleSIGTERM: false,
       handleSIGHUP: false,
-      protocolTimeout: 1200000 // 20 minutos para el protocolo CDP
+      protocolTimeout: 1200000
     },
     catchQR: (base64Qr, asciiQR) => {
       console.log('QR generado. Escanea este QR desde la consola:');
       console.log(asciiQR);
     },
     logQR: false,
-    autoClose: 0, // Desactiva autocierre
+    autoClose: 0,
     tokenStore: 'file',
     folderNameToken: './tokens',
   })
-  .then((c) => {
-    client = c; // Asignamos el cliente aquí
+  .then(async (c) => {
+    client = c;
     console.log("¡WhatsApp está conectado y listo!");
-    keepSessionAlive(); // Inicia la función para mantener la sesión
+    keepSessionAlive();
 
-    // Listener para cambios de estado dentro del .then()
     client.onStateChange((state) => {
       console.log('Estado actual:', state);
       if (state === 'DISCONNECTED') {
@@ -73,13 +72,13 @@ wppconnect
           client.sendText(groupId, message),
           new Promise((_, reject) => setTimeout(() => {
             timeoutOccurred = true;
-            reject(new Error('Timeout después de 28 minutos (próximo a 30 min de Render)'));
-          }, 1680000)) // 28 minutos (1680000 ms), justo antes del límite de 30 min de Render
+            reject(new Error('Timeout después de 28 minutos'));
+          }, 1680000))
         ]);
         const endTime = Date.now();
         if (timeoutOccurred) {
           console.log(`Timeout detectado después de ${((endTime - startTime) / 1000).toFixed(2)} segundos.`);
-          throw new Error('Timeout detectado en Render, revisa los recursos o el plan');
+          throw new Error('Timeout detectado, revisa los recursos');
         } else {
           console.log(`Mensaje enviado con éxito en ${((endTime - startTime) / 1000).toFixed(2)} segundos. Resultado:`, result);
         }
@@ -89,7 +88,7 @@ wppconnect
         if (error.message.includes('WPP is not defined') || error.message.includes('invariant') || error.message.includes('detached Frame') || error.message.includes('Invalid WID') || error.message.includes('Runtime.callFunctionOn timed out') || error.message.includes('Timeout')) {
           console.log('Reiniciando sesión por error crítico...');
           await client.initialize();
-          await new Promise(resolve => setTimeout(resolve, 30000)); // Aumentamos a 30 segundos
+          await new Promise(resolve => setTimeout(resolve, 30000));
           console.log('Reintentando enviar mensaje después de reinicio...');
           let retryResult;
           try {
@@ -122,21 +121,69 @@ wppconnect
       }
     });
   })
-  .catch(error => console.log('Algo salió mal al empezar:', error));
+  .catch(async (error) => {
+    console.log('Algo salió mal al empezar:', error.message, error.stack);
+    // Intenta instalar Chromium manualmente si falla
+    console.log('Intentando instalar Chromium manualmente...');
+    try {
+      await require('child_process').execSync('npx puppeteer browsers install chromium', { stdio: 'inherit' });
+      console.log('Chromium instalado, reiniciando WPPConnect...');
+      // Reinicia el cliente después de instalar Chromium
+      client = await wppconnect.create({
+        session: 'session',
+        puppeteerOptions: {
+          args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-gpu',
+            '--disable-dev-shm-usage',
+            '--disable-extensions',
+            '--single-process',
+            '--no-zygote',
+            '--disable-background-networking',
+            '--enable-low-end-device-mode',
+            '--ignore-certificate-errors',
+            '--no-first-run',
+            '--disable-web-security',
+            '--enable-features=NetworkService',
+            '--disable-default-apps',
+            '--disable-sync'
+          ],
+          headless: true,
+          executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
+          timeout: 1800000,
+          handleSIGTERM: false,
+          handleSIGHUP: false,
+          protocolTimeout: 1200000
+        },
+        catchQR: (base64Qr, asciiQR) => {
+          console.log('QR generado. Escanea este QR desde la consola:');
+          console.log(asciiQR);
+        },
+        logQR: false,
+        autoClose: 0,
+        tokenStore: 'file',
+        folderNameToken: './tokens',
+      });
+      console.log("¡WhatsApp reiniciado con éxito!");
+      keepSessionAlive();
+    } catch (installError) {
+      console.log('Error al instalar Chromium:', installError.message, installError.stack);
+    }
+  });
 
-// Función para mantener la sesión viva verificando el estado con onStateChange
+// Función para mantener la sesión viva
 async function keepSessionAlive() {
   setInterval(async () => {
     if (client) {
       console.log('Manteniendo sesión activa con ping...');
       try {
-        // Usamos onStateChange para verificar el estado
         let currentState = null;
         client.onStateChange((state) => {
           currentState = state;
           console.log('Estado actual en ping:', state);
         });
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Espera 1 segundo para capturar el estado
+        await new Promise(resolve => setTimeout(resolve, 1000));
         if (currentState === 'DISCONNECTED' || currentState === 'UNLAUNCHED') {
           console.log('Sesión desconectada, reiniciando...');
           await client.initialize();
@@ -180,7 +227,6 @@ async function keepSessionAlive() {
   }, 300000); // Cada 5 minutos
 }
 
-// Manejo de señal SIGTERM para intentar cerrar gracefully
 process.on('SIGTERM', () => {
   console.log('Recibida señal SIGTERM, intentando cerrar gracefully...');
   if (client) {
